@@ -1,0 +1,19 @@
+CREATE VERTEX Document (
+    PRIMARY_ID id STRING,
+    title STRING,
+    text STRING
+) WITH primary_id_as_attribute="true"
+
+CREATE VERTEX Entity (
+    PRIMARY_ID name STRING
+) WITH primary_id_as_attribute="true"
+
+CREATE UNDIRECTED EDGE MENTIONS (
+    FROM Document,
+    TO Entity
+)
+
+CREATE UNDIRECTED EDGE RELATED_TO (
+    FROM Entity,
+    TO Entity
+)
