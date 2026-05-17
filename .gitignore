@@ -220,4 +220,5 @@
 
     chromadb/
     data/graphrag/
-    data/raw/
+    
+data/raw/earnings_calls/
