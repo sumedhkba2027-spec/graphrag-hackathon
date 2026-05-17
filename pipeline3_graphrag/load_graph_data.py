@@ -6,53 +6,42 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Load spaCy model
 nlp = spacy.load("en_core_web_sm")
 
 HOST = os.getenv("TG_HOST")
 SECRET = os.getenv("TG_SECRET")
-GRAPH = os.getenv("TG_GRAPH")  # "GraphRAG"
+GRAPH = os.getenv("TG_GRAPH")
 
-# Devanshu's fix — pass secret in FIRST connection
 conn = tg.TigerGraphConnection(
-    host=HOST,
-    graphname=GRAPH,
-    gsqlSecret=SECRET,
+    host=HOST, graphname=GRAPH, gsqlSecret=SECRET
 )
-
 token = conn.getToken(SECRET)
 if isinstance(token, tuple):
     token = token[0]
-
-# Reconnect with both secret AND token
 conn = tg.TigerGraphConnection(
-    host=HOST,
-    graphname=GRAPH,
-    gsqlSecret=SECRET,
-    apiToken=token,
+    host=HOST, graphname=GRAPH, gsqlSecret=SECRET, apiToken=token
 )
 print("✅ Connected to TigerGraph!")
 
-# Load articles
 with open("data/articles.json", "r", encoding="utf-8") as f:
     articles = json.load(f)
-
 print(f"✅ Loaded {len(articles)} articles")
 
-# Process articles
 for article in articles:
     doc_id = str(article["id"])
     title = article["title"]
     text = article["text"][:5000]
 
-    # Insert Document vertex
+    # Insert Document — using actual attribute names from schema
     conn.upsertVertex("Document", doc_id, {
         "title": title,
-        "text": text
+        "text": text,
+        "content": text,  # schema has both text and content
+        "name": title
     })
     print(f"📄 Added document: {title}")
 
-    # Extract entities using spaCy
+    # Extract entities
     doc = nlp(text)
     entities = set()
     for ent in doc.ents:
@@ -62,14 +51,23 @@ for article in articles:
 
     # Add entity vertices and MENTIONS edges
     for entity in entities:
-        conn.upsertVertex("Entity", entity)
-        conn.upsertEdge("Document", doc_id, "MENTIONS", "Entity", entity)
+        # Entity PRIMARY_ID is id, name is attribute
+        entity_id = entity.replace(" ", "_").lower()
+        conn.upsertVertex("Entity", entity_id, {
+            "name": entity,
+            "title": entity,
+            "content": entity,
+            "source": title
+        })
+        conn.upsertEdge("Entity", entity_id, "Mentions", "Document", doc_id)
 
     # Create RELATED_TO edges between entities
     entity_list = list(entities)
     for i in range(len(entity_list)):
         for j in range(i + 1, len(entity_list)):
-            conn.upsertEdge("Entity", entity_list[i], "RELATED_TO", "Entity", entity_list[j])
+            id_i = entity_list[i].replace(" ", "_").lower()
+            id_j = entity_list[j].replace(" ", "_").lower()
+            conn.upsertEdge("Entity", id_i, "RELATED_TO", "Entity", id_j)
 
     print(f"🔗 Added {len(entities)} entities")
 

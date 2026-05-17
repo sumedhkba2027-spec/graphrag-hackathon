@@ -220,5 +220,13 @@
 
     chromadb/
     data/graphrag/
-    
-data/raw/earnings_calls/
+
+    data/backups/
+    data/raw/
+
+    dashboard/__pycache__/
+    evaluation/__pycache__/
+    pipeline3_graphrag/__pycache__/
+
+    *.gml
+    *.sqlite3
