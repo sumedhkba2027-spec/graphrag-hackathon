@@ -1,0 +1,37 @@
+flowchart TD
+    subgraph Ingestion["Data Ingestion (load_graph_data.py)"]
+        A[("articles.json")] --> B["spaCy NER\nen_core_web_sm"]
+        B --> C[("TigerGraph\nDocument vertices\nEntity vertices\nMENTIONS edges\nRELATED_TO edges")]
+    end
+
+    subgraph Query["Query Pipelines"]
+        Q["User Question"] --> P1
+        Q --> P2
+        Q --> P3
+
+        subgraph P1["Pipeline 1 — LLM Only"]
+            P1A["Gemini 2.5 Flash\n(no context)"]
+        end
+
+        subgraph P2["Pipeline 2 — Basic RAG"]
+            P2A["Vector DB\n(ChromaDB chunks)"] --> P2B["Top-K Retrieval"]
+            P2B --> P2C["Gemini 2.5 Flash\n+ chunk context"]
+        end
+
+        subgraph P3["Pipeline 3 — GraphRAG"]
+            P3A["Entity Extraction\n(spaCy)"] --> P3B["Graph Traversal\n(TigerGraph GSQL)"]
+            C --> P3B
+            P3B --> P3C["Assembled Context\n(entities + docs)"]
+            P3C --> P3D["Gemini 2.5 Flash\n+ graph context"]
+        end
+    end
+
+    subgraph Dashboard["Streamlit Dashboard (app.py)"]
+        D["Pipeline 1 Answer\n+ Tokens / Latency / Cost"]
+        E["Pipeline 2 Answer\n+ Chunks / Tokens / Latency / Cost"]
+        F["Pipeline 3 Answer\n+ Graph hops / Tokens / Latency / Cost"]
+    end
+
+    P1A --> D
+    P2C --> E
+    P3D --> F
