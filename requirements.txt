@@ -1,0 +1,14 @@
+google-generativeai
+chromadb
+sentence-transformers
+streamlit
+bert-score
+wikipedia
+python-dotenv
+requests
+pandas
+tiktoken
+spacy
+pyTigerGraph
+evaluate
+huggingface-hub
