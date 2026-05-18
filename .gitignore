@@ -230,3 +230,4 @@
 
     *.gml
     *.sqlite3
+data/raw/
